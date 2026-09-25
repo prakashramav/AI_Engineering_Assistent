@@ -9,28 +9,58 @@ logger = logging.getLogger(__name__)
 
 class LLMService:
     """
-    Anthropic Claude 3.5 API integration for Code Understanding,
+    Google Gemini API integration (with Anthropic Claude fallback) for Code Understanding,
     RAG Q&A, Bug Scanning, PR Reviews, and Code Generation.
     Includes smart local reasoning fallback for zero-cost dev/mock mode.
     """
 
     def __init__(self):
-        self.api_key = settings.ANTHROPIC_API_KEY
-        self.model = settings.DEFAULT_CLAUDE_MODEL
-        self._client = None
-        if self.api_key and not settings.MOCK_LLM:
-            try:
-                import anthropic
-                self._client = anthropic.AsyncAnthropic(api_key=self.api_key)
-                logger.info(f"Initialized Anthropic client with model {self.model}")
-            except Exception as e:
-                logger.warning(f"Failed to initialize Anthropic client: {e}. Using fallback.")
+        self.gemini_key = settings.GEMINI_API_KEY or os.environ.get("GEMINI_API_KEY", "")
+        self.gemini_model = settings.DEFAULT_GEMINI_MODEL
+        self.anthropic_key = settings.ANTHROPIC_API_KEY or os.environ.get("ANTHROPIC_API_KEY", "")
+        self.claude_model = settings.DEFAULT_CLAUDE_MODEL
+        self._gemini_client = None
+        self._anthropic_client = None
 
-    async def _call_claude(self, prompt: str, system: str = "") -> str:
-        if self._client is not None:
+        if not settings.MOCK_LLM:
+            if self.gemini_key:
+                try:
+                    from google import genai
+                    self._gemini_client = genai.Client(api_key=self.gemini_key)
+                    logger.info(f"Initialized Google Gemini client with model {self.gemini_model}")
+                except Exception as e:
+                    logger.warning(f"Failed to initialize Gemini client: {e}. Using fallback.")
+
+            if not self._gemini_client and self.anthropic_key:
+                try:
+                    import anthropic
+                    self._anthropic_client = anthropic.AsyncAnthropic(api_key=self.anthropic_key)
+                    logger.info(f"Initialized Anthropic client with model {self.claude_model}")
+                except Exception as e:
+                    logger.warning(f"Failed to initialize Anthropic client: {e}. Using fallback.")
+
+    async def _call_llm(self, prompt: str, system: str = "") -> str:
+        if self._gemini_client is not None:
             try:
-                message = await self._client.messages.create(
-                    model=self.model,
+                from google.genai import types
+                config = types.GenerateContentConfig(
+                    temperature=0.2,
+                    system_instruction=system or "You are an elite Staff Software Engineer and codebase architect.",
+                )
+                response = await self._gemini_client.aio.models.generate_content(
+                    model=self.gemini_model,
+                    contents=prompt,
+                    config=config,
+                )
+                if response and response.text:
+                    return response.text
+            except Exception as e:
+                logger.error(f"Gemini API call failed: {e}. Falling back to alternative/reasoning engine.")
+
+        if self._anthropic_client is not None:
+            try:
+                message = await self._anthropic_client.messages.create(
+                    model=self.claude_model,
                     max_tokens=4096,
                     temperature=0.2,
                     system=system or "You are an elite Staff Software Engineer and codebase architect.",
@@ -41,6 +71,9 @@ class LLMService:
                 logger.error(f"Anthropic API call failed: {e}. Falling back to reasoning engine.")
 
         return ""
+
+    # Alias for backwards compatibility
+    _call_claude = _call_llm
 
     async def answer_qa(
         self,

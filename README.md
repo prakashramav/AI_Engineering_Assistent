@@ -32,7 +32,7 @@ A full-stack, developer-first engineering intelligence platform that connects to
 - **Code Parsing**: Tree-sitter AST parsing (`tree-sitter`, `tree-sitter-python`, `tree-sitter-javascript`, `tree-sitter-typescript`) for language-aware function, class, and import boundary extraction.
 - **Vector Store**: ChromaDB with `BaseVectorStore` interface (cleanly swappable to Pinecone/Weaviate with one file change).
 - **Embeddings**: Sentence-Transformers with deterministic semantic feature hashing fallback for zero-dependency offline resilience.
-- **LLM Reasoning**: Claude 3.5 (Anthropic SDK) for Q&A, bug detection, PR review, test generation, and doc generation.
+- **LLM Reasoning**: Google Gemini (via `google-genai` SDK, with Claude fallback) for Q&A, bug detection, PR review, test generation, and doc generation.
 - **Database**: SQLAlchemy models for repositories, files, tree-sitter chunks, dependency graph edges, dependencies, bug findings, Q&A history, PR reviews, and commit summaries.
 
 ---
@@ -76,7 +76,10 @@ Open `http://localhost:3000` in your browser.
 ## 🔑 Environment Variables (`backend/.env`)
 
 ```ini
-# Anthropic Claude API Key (optional - smart offline reasoning fallback active when blank)
+# Google Gemini API Key (recommended - smart offline reasoning fallback active when blank)
+GEMINI_API_KEY=your_gemini_api_key_here
+
+# Anthropic Claude API Key (optional fallback)
 ANTHROPIC_API_KEY=your_anthropic_api_key_here
 
 # GitHub Token (optional - allows private repos and higher rate limits)

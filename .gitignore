@@ -1,0 +1,44 @@
+# Environment files
+.env
+.env.*
+*.env
+backend/.env
+backend/.env.example
+.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+build/
+dist/
+*.egg-info/
+
+# Databases & local vector stores
+*.db
+*.sqlite
+*.sqlite3
+chroma_data/
+engineering_assistant.db
+
+# Storage for cloned repos
+downloaded_repos/
+
+# Node / Frontend
+node_modules/
+.next/
+out/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS / Editor artifacts
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
