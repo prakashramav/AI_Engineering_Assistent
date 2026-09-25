@@ -89,7 +89,7 @@ class QAService:
                     lines.append(f"Modules called/imported by `{top_file}`: " + ", ".join([c.to_module for c in callees]))
                 call_graph_context = "\n".join(lines)
 
-        # 4. Synthesize with Claude LLM
+        # 4. Synthesize with Gemini LLM
         llm_result = await llm_service.answer_qa(
             question=question,
             retrieved_chunks=retrieved_items[:6],

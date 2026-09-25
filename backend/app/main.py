@@ -59,7 +59,7 @@ def root():
 def healthcheck():
     return {
         "status": "healthy",
-        "llm_configured": bool(settings.GEMINI_API_KEY or settings.ANTHROPIC_API_KEY),
+        "llm_configured": bool(settings.GEMINI_API_KEY),
         "mock_mode": settings.MOCK_LLM,
     }
 

@@ -230,7 +230,7 @@ export default function CodeExplorerPage({ params }) {
           {loadingAction ? (
             <div className="h-64 flex flex-col items-center justify-center gap-3 text-slate-400">
               <Loader2 className="w-6 h-6 animate-spin text-cyan-400" />
-              <span className="font-mono text-xs">Reasoning with Claude 3.5...</span>
+              <span className="font-mono text-xs">Reasoning with Gemini...</span>
             </div>
           ) : inspectorTab === 'explain' ? (
             <div className="space-y-3">

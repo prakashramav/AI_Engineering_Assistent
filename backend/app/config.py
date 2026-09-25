@@ -6,13 +6,9 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "AI Software Engineering Assistant"
     API_V1_STR: str = "/api"
     
-    # Gemini LLM (Primary)
+    # Gemini LLM
     GEMINI_API_KEY: str = ""
     DEFAULT_GEMINI_MODEL: str = "gemini-2.5-flash"
-
-    # Anthropic LLM (Fallback)
-    ANTHROPIC_API_KEY: str = ""
-    DEFAULT_CLAUDE_MODEL: str = "claude-3-5-sonnet-20241022"
     MOCK_LLM: bool = False
     
     # GitHub Integration

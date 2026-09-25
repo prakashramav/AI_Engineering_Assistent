@@ -22,7 +22,7 @@ This platform provides an all-in-one, local-first AI engineering cockpit:
 - **Automated Bug & Vulnerability Detection**: Identifies critical logic errors, unhandled exceptions, hardcoded secrets, and third-party CVE vulnerabilities via the OSV API.
 - **Automated Pull Request Reviews**: Analyzes git diffs against codebase context, provides overall risk scores, and generates inline threaded comments linked to diff lines.
 - **Instant Developer Tooling**: Generates production-ready unit tests (PyTest / Vitest) and comprehensive module documentation with a single click.
-- **Seamless Local & Cloud Resilience**: Operates with Google Gemini API (or Anthropic Claude), with local offline heuristics fallback when running without API keys.
+- **Seamless Local & Cloud Resilience**: Operates with Google Gemini API, with local offline heuristics fallback when running without API keys.
 
 ---
 
@@ -48,7 +48,7 @@ The platform implements an end-to-end multi-stage pipeline:
 │                    3. HYBRID RAG & MULTI-LLM REASONING                      │
 │  User Query ──► Hybrid Retrieval (Vector Similarity + Exact Symbol Match)   │
 │             ──► Graph Context Expansion (Callers / Callees)                 │
-│             ──► Google Gemini API (gemini-2.5-flash) / Claude Fallback      │
+│             ──► Google Gemini API (gemini-2.5-flash)                        │
 │             ──► Grounded Response with Source Line Citations                │
 └──────────────────────────────────────┬──────────────────────────────────────┘
                                        │
@@ -65,8 +65,8 @@ The platform implements an end-to-end multi-stage pipeline:
 2. **Hybrid RAG Retrieval Engine**:
    When answering questions, the system combines cosine vector similarity in ChromaDB with keyword-boosted exact symbol matching and caller/callee traversal. This eliminates hallucinations and guarantees high-precision code retrieval.
 
-3. **Modern LLM Integration (Google Gemini & Claude)**:
-   Powered by the official `google-genai` SDK with `gemini-2.5-flash` for high-throughput, low-latency reasoning. Supports Anthropic Claude as a secondary fallback and features a deterministic local reasoning engine for zero-cost offline development.
+3. **Modern LLM Integration (Google Gemini)**:
+   Powered by the official `google-genai` SDK with `gemini-2.5-flash` for high-throughput, low-latency reasoning and codebase intelligence, with a deterministic local reasoning engine for zero-cost offline development.
 
 4. **Security & Dependency Auditing**:
    Scans `package.json` and `requirements.txt` against Google's Open Source Vulnerabilities (OSV) database to catch known CVEs while running static AST regex checks for leaked credentials and silent error catching.
@@ -83,8 +83,7 @@ The platform implements an end-to-end multi-stage pipeline:
 - **Backend**: FastAPI (Python), async endpoints, background indexing tasks, SSE progress streams.
 - **Code Parsing**: Tree-sitter AST parsing (`tree-sitter`, `tree-sitter-python`, `tree-sitter-javascript`, `tree-sitter-typescript`) for language-aware function, class, and import boundary extraction.
 - **Vector Store**: ChromaDB with `BaseVectorStore` interface (cleanly swappable to Pinecone/Weaviate with one file change).
-- **Embeddings**: Sentence-Transformers with deterministic semantic feature hashing fallback for zero-dependency offline resilience.
-- **LLM Reasoning**: Google Gemini (via `google-genai` SDK, with Claude fallback) for Q&A, bug detection, PR review, test generation, and doc generation.
+- **LLM Reasoning**: Google Gemini (via `google-genai` SDK with `gemini-2.5-flash`) for Q&A, bug detection, PR review, test generation, and doc generation.
 - **Database**: SQLAlchemy models for repositories, files, tree-sitter chunks, dependency graph edges, dependencies, bug findings, Q&A history, PR reviews, and commit summaries.
 
 ---
@@ -128,11 +127,8 @@ Open `http://localhost:3000` in your browser.
 ## 🔑 Environment Variables (`backend/.env`)
 
 ```ini
-# Google Gemini API Key (recommended - smart offline reasoning fallback active when blank)
+# Google Gemini API Key (smart offline reasoning fallback active when blank)
 GEMINI_API_KEY=your_gemini_api_key_here
-
-# Anthropic Claude API Key (optional fallback)
-ANTHROPIC_API_KEY=your_anthropic_api_key_here
 
 # GitHub Token (optional - allows private repos and higher rate limits)
 GITHUB_TOKEN=your_github_token_here

@@ -41,7 +41,7 @@ export default function CommitsPage({ params }) {
           </h1>
         </div>
         <span className="text-[11px] text-slate-500">
-          Summarized with Claude 3.5
+          Summarized with Gemini
         </span>
       </div>
 

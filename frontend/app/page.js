@@ -37,7 +37,7 @@ export default function HomePage() {
         <div className="text-center space-y-4 max-w-3xl mx-auto pt-4">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-xs font-mono text-cyan-300 shadow-sm">
             <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-            <span>Tree-Sitter Semantic Chunking • Hybrid Vector RAG • Claude 3.5</span>
+            <span>Tree-Sitter Semantic Chunking • Hybrid Vector RAG • Gemini 2.5 Flash</span>
           </div>
 
           <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-slate-100">

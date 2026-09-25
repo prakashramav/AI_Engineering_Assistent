@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 class LLMService:
     """
-    Google Gemini API integration (with Anthropic Claude fallback) for Code Understanding,
+    Google Gemini API integration for Code Understanding,
     RAG Q&A, Bug Scanning, PR Reviews, and Code Generation.
     Includes smart local reasoning fallback for zero-cost dev/mock mode.
     """
@@ -17,27 +17,15 @@ class LLMService:
     def __init__(self):
         self.gemini_key = settings.GEMINI_API_KEY or os.environ.get("GEMINI_API_KEY", "")
         self.gemini_model = settings.DEFAULT_GEMINI_MODEL
-        self.anthropic_key = settings.ANTHROPIC_API_KEY or os.environ.get("ANTHROPIC_API_KEY", "")
-        self.claude_model = settings.DEFAULT_CLAUDE_MODEL
         self._gemini_client = None
-        self._anthropic_client = None
 
-        if not settings.MOCK_LLM:
-            if self.gemini_key:
-                try:
-                    from google import genai
-                    self._gemini_client = genai.Client(api_key=self.gemini_key)
-                    logger.info(f"Initialized Google Gemini client with model {self.gemini_model}")
-                except Exception as e:
-                    logger.warning(f"Failed to initialize Gemini client: {e}. Using fallback.")
-
-            if not self._gemini_client and self.anthropic_key:
-                try:
-                    import anthropic
-                    self._anthropic_client = anthropic.AsyncAnthropic(api_key=self.anthropic_key)
-                    logger.info(f"Initialized Anthropic client with model {self.claude_model}")
-                except Exception as e:
-                    logger.warning(f"Failed to initialize Anthropic client: {e}. Using fallback.")
+        if self.gemini_key and not settings.MOCK_LLM:
+            try:
+                from google import genai
+                self._gemini_client = genai.Client(api_key=self.gemini_key)
+                logger.info(f"Initialized Google Gemini client with model {self.gemini_model}")
+            except Exception as e:
+                logger.warning(f"Failed to initialize Gemini client: {e}. Using fallback reasoning.")
 
     async def _call_llm(self, prompt: str, system: str = "") -> str:
         if self._gemini_client is not None:
@@ -55,25 +43,9 @@ class LLMService:
                 if response and response.text:
                     return response.text
             except Exception as e:
-                logger.error(f"Gemini API call failed: {e}. Falling back to alternative/reasoning engine.")
-
-        if self._anthropic_client is not None:
-            try:
-                message = await self._anthropic_client.messages.create(
-                    model=self.claude_model,
-                    max_tokens=4096,
-                    temperature=0.2,
-                    system=system or "You are an elite Staff Software Engineer and codebase architect.",
-                    messages=[{"role": "user", "content": prompt}],
-                )
-                return message.content[0].text
-            except Exception as e:
-                logger.error(f"Anthropic API call failed: {e}. Falling back to reasoning engine.")
+                logger.error(f"Gemini API call failed: {e}. Falling back to reasoning engine.")
 
         return ""
-
-    # Alias for backwards compatibility
-    _call_claude = _call_llm
 
     async def answer_qa(
         self,
@@ -125,7 +97,7 @@ User Question:
 Provide a direct, thorough response with exact file and line citations.
 """
 
-        llm_resp = await self._call_claude(user_prompt, system=system_prompt)
+        llm_resp = await self._call_llm(user_prompt, system=system_prompt)
         if llm_resp:
             return {"answer": llm_resp, "cited_chunks": cited_chunks}
 
@@ -166,7 +138,7 @@ Ensure the exception is properly handled with a fallback handler or check the pa
         )
 
         user_prompt = f"Analyze file `{file_path}`:\n```\n{code_content[:6000]}\n```"
-        llm_resp = await self._call_claude(user_prompt, system=system_prompt)
+        llm_resp = await self._call_llm(user_prompt, system=system_prompt)
         
         if llm_resp:
             try:
@@ -179,7 +151,7 @@ Ensure the exception is properly handled with a fallback handler or check the pa
                         item["file_path"] = file_path
                     return parsed
             except Exception as e:
-                logger.error(f"Error parsing Claude bug json: {e}")
+                logger.error(f"Error parsing Gemini bug json: {e}")
 
         # Smart deterministic AST/regex pattern detection fallback
         findings = []
@@ -262,7 +234,7 @@ Ensure the exception is properly handled with a fallback handler or check the pa
     async def explain_code(self, file_path: str, code_content: str) -> str:
         """Generates detailed architectural and mechanical explanation of code."""
         prompt = f"Explain the architectural role, logic flow, and edge cases of `{file_path}`:\n```\n{code_content[:4000]}\n```"
-        resp = await self._call_claude(prompt)
+        resp = await self._call_llm(prompt)
         if resp:
             return resp
 
@@ -290,7 +262,7 @@ This module defines core application behavior, encapsulating input transformatio
         )
 
         user_prompt = f"PR Title: {pr_title}\nDiff:\n{pr_diff[:6000]}\nRelated Code:\n{related_code[:2000]}"
-        resp = await self._call_claude(user_prompt, system=system_prompt)
+        resp = await self._call_llm(user_prompt, system=system_prompt)
         if resp:
             try:
                 clean = re.sub(r"^```json\s*", "", resp.strip(), flags=re.MULTILINE)
@@ -326,7 +298,7 @@ This module defines core application behavior, encapsulating input transformatio
     async def generate_tests(self, file_path: str, symbol_name: str, code_content: str) -> str:
         """Generates unit tests with edge cases and mocked dependencies."""
         prompt = f"Generate comprehensive unit tests with mocks and edge cases for `{symbol_name}` in `{file_path}`:\n```\n{code_content[:3000]}\n```"
-        resp = await self._call_claude(prompt)
+        resp = await self._call_llm(prompt)
         if resp:
             return resp
 
@@ -391,7 +363,7 @@ describe('{symbol_name}', () => {{
     async def generate_docs(self, file_path: str, code_content: str) -> str:
         """Generates markdown documentation, docstrings, and README usage snippet."""
         prompt = f"Generate rich technical documentation and README usage for `{file_path}`:\n```\n{code_content[:3000]}\n```"
-        resp = await self._call_claude(prompt)
+        resp = await self._call_llm(prompt)
         if resp:
             return resp
 
@@ -426,7 +398,7 @@ async function run() {{
     async def summarize_commit(self, message: str, diff: str) -> str:
         """Generates a high-signal one-line commit summary."""
         prompt = f"Summarize this git commit in one clear sentence explaining impact:\nMessage: {message}\nDiff excerpt: {diff[:1000]}"
-        resp = await self._call_claude(prompt)
+        resp = await self._call_llm(prompt)
         if resp:
             return resp.strip()
 
