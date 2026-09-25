@@ -4,28 +4,80 @@ A full-stack, developer-first engineering intelligence platform that connects to
 
 ---
 
-## 🛠️ Architecture & Tech Stack
+## 📌 Problem Statement
+
+Modern software codebases are massive, distributed, and complex. Engineering teams face critical operational bottlenecks:
+- **High Onboarding & Comprehension Cost**: Developers spend up to 60–70% of their time reading, tracing, and understanding existing code rather than building new features.
+- **Context Limits & Hallucinations in Standard LLMs**: Passing raw code into generic AI prompts leads to truncated context, hallucinated line numbers, and irrelevant recommendations.
+- **Architectural Blindspots**: Most tools lack awareness of caller-callee call graphs, module dependencies, and entry-point topologies.
+- **Manual, Slow PR Reviews & Bug Auditing**: Security vulnerabilities, race conditions, edge-case regressions, and missing unit tests slip into production due to review fatigue.
+
+---
+
+## 💡 What I Solve
+
+This platform provides an all-in-one, local-first AI engineering cockpit:
+- **Grounded Codebase Intelligence**: Ask complex questions about any repository and receive answers with precise, clickable file and line-range citations (`path/to/file.ext:start-end`).
+- **Deep Architectural Visibility**: Interactive dependency graph visualization powered by React Flow, mapping modules, inbound/outbound degrees, and system entry points.
+- **Automated Bug & Vulnerability Detection**: Identifies critical logic errors, unhandled exceptions, hardcoded secrets, and third-party CVE vulnerabilities via the OSV API.
+- **Automated Pull Request Reviews**: Analyzes git diffs against codebase context, provides overall risk scores, and generates inline threaded comments linked to diff lines.
+- **Instant Developer Tooling**: Generates production-ready unit tests (PyTest / Vitest) and comprehensive module documentation with a single click.
+- **Seamless Local & Cloud Resilience**: Operates with Google Gemini API (or Anthropic Claude), with local offline heuristics fallback when running without API keys.
+
+---
+
+## ⚙️ How I Solve It
+
+The platform implements an end-to-end multi-stage pipeline:
 
 ```
-   ┌─────────────────────────────────────────────────────────────┐
-   │             Next.js 16 (App Router, JavaScript)             │
-   │  - Prism Syntax Highlighter & Line Bug Gutters              │
-   │  - Interactive React Flow Architecture Topology             │
-   │  - Code Reference Chips (file_path:start-end)               │
-   │  - Side-by-Side PR Diff Viewer with Inline Threaded AI      │
-   │  - Mock / Live Backend Seamless Toggle                      │
-   └──────────────────────────────┬──────────────────────────────┘
-                                  │ HTTP / SSE (/api)
-   ┌──────────────────────────────▼──────────────────────────────┐
-   │                    FastAPI Backend (Python)                 │
-   │  - Tree-Sitter AST Parser (Python, JS, TS, JSON)            │
-   │  - ChromaDB Local Vector Store (swappable BaseVectorStore)  │
-   │  - Hybrid Retrieval: Vector Cosine + Symbol Keyword Boost   │
-   │  - OSV API + Heuristic Security Vulnerability Auditing      │
-   │  - Claude 3.5 Sonnet / Haiku Integration & Mock Fallback    │
-   │  - SQLite / PostgreSQL with SQLAlchemy & Diff Re-indexing   │
-   └─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                            1. INGESTION & PARSING                           │
+│  GitHub Repository ──► Shallow Clone ──► Tree-Sitter AST Parser             │
+│  (Language-aware extraction: functions, classes, imports in Python/JS/TS)   │
+└──────────────────────────────────────┬──────────────────────────────────────┘
+                                       │
+┌──────────────────────────────────────▼──────────────────────────────────────┐
+│                    2. HYBRID INDEXING & KNOWLEDGE GRAPH                     │
+│  - ChromaDB Vector Store: Cosine vector embeddings for semantic search      │
+│  - NetworkX Graph Engine: Module dependency and call-graph topology         │
+│  - SQLite Database: File records, AST chunk metadata, and security findings │
+└──────────────────────────────────────┬──────────────────────────────────────┘
+                                       │
+┌──────────────────────────────────────▼──────────────────────────────────────┐
+│                    3. HYBRID RAG & MULTI-LLM REASONING                      │
+│  User Query ──► Hybrid Retrieval (Vector Similarity + Exact Symbol Match)   │
+│             ──► Graph Context Expansion (Callers / Callees)                 │
+│             ──► Google Gemini API (gemini-2.5-flash) / Claude Fallback      │
+│             ──► Grounded Response with Source Line Citations                │
+└──────────────────────────────────────┬──────────────────────────────────────┘
+                                       │
+┌──────────────────────────────────────▼──────────────────────────────────────┐
+│                         4. INTERACTIVE DEVELOPER UI                         │
+│  Next.js 16 App Router • React Flow Visual Graph • Prism Syntax Inspector   │
+│  Real-time SSE Progress Streaming • Side-by-Side PR Diff Viewer             │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
+
+1. **Semantic AST Chunking with Tree-Sitter**:
+   Instead of naive line or token chunking, the backend uses Tree-Sitter grammars (Python, JavaScript, TypeScript, JSON) to split code along natural syntactic boundaries (functions, classes, methods), retaining symbol names, signatures, and exact line ranges.
+
+2. **Hybrid RAG Retrieval Engine**:
+   When answering questions, the system combines cosine vector similarity in ChromaDB with keyword-boosted exact symbol matching and caller/callee traversal. This eliminates hallucinations and guarantees high-precision code retrieval.
+
+3. **Modern LLM Integration (Google Gemini & Claude)**:
+   Powered by the official `google-genai` SDK with `gemini-2.5-flash` for high-throughput, low-latency reasoning. Supports Anthropic Claude as a secondary fallback and features a deterministic local reasoning engine for zero-cost offline development.
+
+4. **Security & Dependency Auditing**:
+   Scans `package.json` and `requirements.txt` against Google's Open Source Vulnerabilities (OSV) database to catch known CVEs while running static AST regex checks for leaked credentials and silent error catching.
+
+5. **Full-Stack Developer Platform**:
+   - **Frontend**: Next.js 16, Tailwind CSS, Prism.js, `@xyflow/react` (React Flow topology), `lucide-react`.
+   - **Backend**: FastAPI (Python 3.10+), SQLAlchemy, ChromaDB, NetworkX, and SSE real-time streaming.
+
+---
+
+## 🛠️ Architecture & Tech Stack
 
 - **Frontend**: Next.js 16 (App Router), JavaScript, Tailwind CSS, Prism.js, `@xyflow/react` (React Flow), `lucide-react`.
 - **Backend**: FastAPI (Python), async endpoints, background indexing tasks, SSE progress streams.
@@ -48,14 +100,14 @@ cd Engineering_Assistant
 # Install backend dependencies
 pip install -r backend/requirements.txt
 
-# (Optional) Configure environment variables in backend/.env
+# Configure environment variables in backend/.env
 # Copy example:
 cp backend/.env.example backend/.env
 
 # Launch FastAPI backend
 python -m uvicorn backend.app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
-The backend API is now live at `http://127.0.0.1:8000` (Interactive docs at `http://127.0.0.1:8000/docs`).
+The backend API will be live at `http://127.0.0.1:8000` (Interactive Swagger docs at `http://127.0.0.1:8000/docs`).
 
 ### 2. Frontend Setup (Next.js)
 
@@ -132,7 +184,7 @@ MOCK_LLM=false
 
 7. **Commit History (`/repo/[id]/commits`)**:
    - Compact developer commit cards with SHA badges.
-   - Claude 3.5 single-sentence impact summaries.
+   - AI single-sentence impact summaries.
    - Expandable commit details and change analysis.
 
 8. **Mock / Live Backend Switcher**:
