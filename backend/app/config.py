@@ -31,7 +31,7 @@ class Settings(BaseSettings):
     REPOS_STORAGE_DIR: str = "./downloaded_repos"
 
     class Config:
-        env_file = ".env"
+        env_file = (".env", "backend/.env", "../.env")
         env_file_encoding = "utf-8"
         extra = "ignore"
 
