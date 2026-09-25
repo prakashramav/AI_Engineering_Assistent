@@ -30,13 +30,20 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS configuration for Next.js frontend
+# CORS configuration allowing local dev and all deployed frontends (Vercel, Render, Netlify)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows local dev from Next.js (port 3000)
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:8000",
+        "https://ai-engineering-assistent-gen-ai.onrender.com",
+    ],
+    allow_origin_regex=r"^https?://.*",
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 # Include Routers

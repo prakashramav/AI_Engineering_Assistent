@@ -10,7 +10,13 @@ import {
   MOCK_QA_SESSIONS,
 } from './mockData';
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api';
+const getBaseUrl = () => {
+  const envUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ai-engineering-assistent-gen-ai.onrender.com/api';
+  const trimmed = envUrl.trim().replace(/\/+$/, '');
+  return trimmed.endsWith('/api') ? trimmed : `${trimmed}/api`;
+};
+
+const BASE_URL = getBaseUrl();
 
 class ApiClient {
   constructor() {
